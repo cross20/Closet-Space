@@ -1,11 +1,13 @@
 //import logo from './logo.svg';
 import './App.css';
 import React, {useState} from 'react';
+import data from "./mock-items"
 //import ReactDOM from 'react-dom';
 
 // Firebase App (the core Firebase SDK) is always required and must be listed first
 import firebase from "firebase/app";
 import "firebase/auth";
+import { func } from 'prop-types';
 
 const fb = require("firebase");
 // Required for side-effects
@@ -27,20 +29,38 @@ firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
 
-function ClosetSpace() {
-  return(
-    <div>
-      <p>Hello World!</p>
+const Items = () => {
+
+  const [items, setItems] = useState(data);
+
+  return (
+    <div className='Items'> {/* TODO: Implement CSS class name */}
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Condition</th>
+            <th>Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr>
+              <td>{item.name}</td>
+              <td>{item.condition}</td>
+              <td>{item.quantity}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  )
+  );
 }
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <ClosetSpace />
-      </header>
+      <Items />
     </div>
   );
 }
