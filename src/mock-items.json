@@ -6,13 +6,13 @@
         "quantity": 8
     },
     {
-        "id": 0,
+        "id": 1,
         "name": "Chad",
         "condition": "Good",
         "quantity": 3
     },
     {
-        "id": 0,
+        "id": 2,
         "name": "Kyle",
         "condition": "Fair",
         "quantity": 12
