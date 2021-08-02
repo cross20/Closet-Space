@@ -29,6 +29,31 @@ firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
 
+/** 
+ * Table header.
+ * @param {props} Value - data to include in the header.
+ */
+const Header = (props) => {
+  return (
+    <th class="Table">
+      {props.value}
+    </th>
+  )
+}
+
+/** 
+ * Table data.
+ * @param {props} Value - data to include in the cell.
+ */
+const Cell = (props) => {
+  // TODO: determine how to align text to left using CSS.
+  return (
+    <td class="Table">
+      {props.value}
+    </td>
+  )
+}
+
 const Items = () => {
 
   const [items, setItems] = useState(data);
@@ -38,17 +63,17 @@ const Items = () => {
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Condition</th>
-            <th>Quantity</th>
+            <Header value="Name" />
+            <Header value="Condition" />
+            <Header value="Quantity" />
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
             <tr>
-              <td>{item.name}</td>
-              <td>{item.condition}</td>
-              <td>{item.quantity}</td>
+              <Cell value={item.name} />
+              <Cell value={item.condition} />
+              <Cell value={item.quantity} />
             </tr>
           ))}
         </tbody>
