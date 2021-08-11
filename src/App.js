@@ -1,7 +1,8 @@
 //import logo from './logo.svg';
 import './App.css';
 import React, {useState} from 'react';
-import data from "./mock-items"
+import { nanoid } from 'nanoid';
+import data from "./mock-items";
 //import ReactDOM from 'react-dom';
 
 // Firebase App (the core Firebase SDK) is always required and must be listed first
@@ -57,27 +58,85 @@ const Cell = (props) => {
 const Items = () => {
 
   const [items, setItems] = useState(data);
+  const [itemData, setItemData] = useState({
+    name: '',
+    condition: '',
+    quantity: 0
+  })
+
+  const addItemData = (event) => {
+    event.preventDefault();
+
+    const fieldName = event.target.getAttribute('name');
+    const fieldValue = event.target.value;
+
+    const newItemData = { ...itemData };
+    newItemData[fieldName] = fieldValue;
+
+    setItemData(newItemData);
+  }
+
+  const addItem = (event) => {
+    event.preventDefault();
+
+    const newItem = {
+      id: nanoid(),
+      name: itemData.name,
+      condition: itemData.condition,
+      quantity: itemData.quantity
+    };
+
+    const newItems = [ ...items, newItem ];
+
+    setItems(newItems);
+  }
 
   return (
     <div className='Items'> {/* TODO: Implement CSS class name */}
-      <table>
-        <thead>
-          <tr>
-            <Header value="Name" />
-            <Header value="Condition" />
-            <Header value="Quantity" />
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
+      <div className='Items-table'> {/* TODO: Implement CSS class name */}
+        <table>
+          <thead>
             <tr>
-              <Cell value={item.name} />
-              <Cell value={item.condition} />
-              <Cell value={item.quantity} />
+              <Header value="Name" />
+              <Header value="Condition" />
+              <Header value="Quantity" />
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr>
+                <Cell value={item.name} />
+                <Cell value={item.condition} />
+                <Cell value={item.quantity} />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className='Items-form'> {/* TODO: Implement CSS class name */}
+        <form onSubmit={addItem}>
+          <label>Name</label>
+          <input type="text"
+                 name="name"
+                 required="required" 
+                 onChange={addItemData}></input>
+
+          <label>Condition</label>
+          <input type="text" 
+                 name="condition"
+                 required="required"
+                 onChange={addItemData}></input>
+
+          <label>Quantity</label>
+          <input type="number"
+                 name="quantity"
+                 required="required"
+                 onChange={addItemData}></input>
+
+          <input type="submit"
+                 value="Submit"></input>
+        </form>
+      </div>
     </div>
   );
 }

@@ -11,6 +11,15 @@
   padding: 8px;
 }
 
+.Items {
+  text-align: left;
+  padding: 5px;
+}
+
+.Items-form {
+  padding: 10px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 1000s linear;
