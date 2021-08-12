@@ -47,12 +47,56 @@ const Header = (props) => {
  * @param {props} Value - data to include in the cell.
  */
 const Cell = (props) => {
-  // TODO: determine how to align text to left using CSS.
+
+  if (props.mode == 1) {
+    return (
+      <td class='Table'>
+        <button>{props.value}</button>
+      </td>
+    );
+  }
+
   return (
     <td class="Table">
       {props.value}
     </td>
-  )
+  );
+}
+
+/**
+ * 
+ * @param {props} Type - determines which mode to use when the action is taken.
+ * @param {props} Mode - determines how the table row can be interacted with.
+ * @param {props} SetMode - function for setting the mode of the parent.
+ */
+const ActionCell = (props) => {
+  const [mode, setMode] = useState(props.mode);
+
+  const handleSetMode = (mode) => {
+    setMode(mode);
+    props.setMode(mode);
+  }
+
+  // TODO: determine how to align text to left using CSS.
+  if (props.type == 'edit') {
+    if (mode == 0) {
+      return (
+        <td class='Table'>
+          <button onClick={() => handleSetMode(1)}>
+            Edit
+          </button>
+        </td>
+      );
+    }
+
+    return (
+      <td class='Table'>
+        <button onClick={() => handleSetMode(0)}>
+          Save
+        </button>
+      </td>
+    );
+  }
 }
 
 const Items = () => {
@@ -62,7 +106,8 @@ const Items = () => {
     name: '',
     condition: '',
     quantity: 0
-  })
+  });
+  const [mode, setMode] = useState(0);
 
   const addItemData = (event) => {
     event.preventDefault();
@@ -100,14 +145,16 @@ const Items = () => {
               <Header value="Name" />
               <Header value="Condition" />
               <Header value="Quantity" />
+              <Header value="Actions" />
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
               <tr>
-                <Cell value={item.name} />
-                <Cell value={item.condition} />
-                <Cell value={item.quantity} />
+                <Cell value={item.name} mode={mode} />
+                <Cell value={item.condition} mode={mode} />
+                <Cell value={item.quantity} mode={mode} />
+                <ActionCell type="edit" mode={mode} setMode={() => setMode} />
               </tr>
             ))}
           </tbody>
