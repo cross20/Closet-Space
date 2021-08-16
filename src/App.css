@@ -20,6 +20,10 @@
   padding: 10px;
 }
 
+td {
+  padding: 8px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 1000s linear;

@@ -1,6 +1,6 @@
 //import logo from './logo.svg';
 import './App.css';
-import React, {useState} from 'react';
+import React, {useState, Fragment} from 'react';
 import { nanoid } from 'nanoid';
 import data from "./mock-items";
 //import ReactDOM from 'react-dom';
@@ -8,7 +8,6 @@ import data from "./mock-items";
 // Firebase App (the core Firebase SDK) is always required and must be listed first
 import firebase from "firebase/app";
 import "firebase/auth";
-import { func } from 'prop-types';
 
 const fb = require("firebase");
 // Required for side-effects
@@ -47,15 +46,6 @@ const Header = (props) => {
  * @param {props} Value - data to include in the cell.
  */
 const Cell = (props) => {
-
-  if (props.mode == 1) {
-    return (
-      <td class='Table'>
-        <button>{props.value}</button>
-      </td>
-    );
-  }
-
   return (
     <td class="Table">
       {props.value}
@@ -70,33 +60,104 @@ const Cell = (props) => {
  * @param {props} SetMode - function for setting the mode of the parent.
  */
 const ActionCell = (props) => {
-  const [mode, setMode] = useState(props.mode);
 
-  const handleSetMode = (mode) => {
-    setMode(mode);
-    props.setMode(mode);
-  }
+  const [editItemId, setEditItemId] = useState(props.editItemId);
 
   // TODO: determine how to align text to left using CSS.
-  if (props.type == 'edit') {
-    if (mode == 0) {
-      return (
-        <td class='Table'>
-          <button onClick={() => handleSetMode(1)}>
-            Edit
-          </button>
-        </td>
-      );
+  if (props.type === 'edit') {
+
+    const handleEditItemId = (editItemId) => {
+      setEditItemId(editItemId);
+      props.setEditItemId(editItemId);
     }
 
     return (
       <td class='Table'>
-        <button onClick={() => handleSetMode(0)}>
-          Save
+        <button onClick={() => handleEditItemId(props.itemId)}>
+          Edit
         </button>
       </td>
     );
   }
+}
+
+const ReadableRow = ({ item, editItemId, setEditItemId }) => {
+  return (
+    <tr>
+      <Cell value={item.name} />
+      <Cell value={item.condition} />
+      <Cell value={item.quantity} />
+      <ActionCell type="edit" itemId={item.id} editItemId={editItemId} setEditItemId={(id) => setEditItemId(id)} />
+    </tr>
+  );
+}
+
+const EditableRow = ({ onChange, onCancel }) => {
+  return (
+    <tr>
+      <td>
+        <input type="text"
+          name="name"
+          required="required"
+          onChange={onChange}>
+        </input>
+      </td>
+      <td>
+        <input type="text" 
+          name="condition"
+          required="required"
+          onChange={onChange}>
+        </input>
+      </td>
+      <td>
+        <input type="number"
+          name="quantity"
+          required="required"
+          onChange={onChange}>
+        </input>
+      </td>
+      <td>
+        <input type="submit"
+          value="Save">
+        </input>
+        <button onClick={onCancel}>Cancel</button>
+      </td>
+    </tr>
+  );
+}
+
+const NewRow = ({ addItemData, disabled }) => {
+  return (
+    <tr>
+      <td>
+        <input type="text"
+          name="name"
+          required="required" 
+          onChange={addItemData}>
+        </input>
+      </td>
+      <td>
+        <input type="text" 
+          name="condition"
+          required="required"
+          onChange={addItemData}>
+        </input>
+      </td>
+      <td>
+        <input type="number"
+          name="quantity"
+          required="required"
+          onChange={addItemData}>
+        </input>
+      </td>
+      <td>
+        <input type='submit'
+          value='Add'
+          disabled={disabled}>
+        </input>
+      </td>
+    </tr>
+  );
 }
 
 const Items = () => {
@@ -107,7 +168,16 @@ const Items = () => {
     condition: '',
     quantity: 0
   });
-  const [mode, setMode] = useState(0);
+  const [editItemId, setEditItemId] = useState(null);
+
+  const submitItem = (event) => {
+    if (editItemId === null) {
+      addItem(event);
+      // TODO: determine how to clear form inputs after add item.
+    } else {
+      updateItem(event);
+    }
+  }
 
   const addItemData = (event) => {
     event.preventDefault();
@@ -136,52 +206,57 @@ const Items = () => {
     setItems(newItems);
   }
 
+  const updateItem = (event) => {
+    event.preventDefault();
+    
+    const newItem = {
+      id: editItemId,
+      name: itemData.name,
+      condition: itemData.condition,
+      quantity: itemData.quantity
+    };
+
+    var newItems = [ ...items ];
+
+    for ( var i = 0; i < newItems.length; i++ ) {
+      if(newItems[i].id === newItem.id) {
+        newItems[i] = newItem;
+      }
+    }
+
+    setItems(newItems);
+    setEditItemId(null);
+  }
+
+  const onCancel = () => {
+    setEditItemId(null);
+  }
+
   return (
     <div className='Items'> {/* TODO: Implement CSS class name */}
       <div className='Items-table'> {/* TODO: Implement CSS class name */}
-        <table>
-          <thead>
-            <tr>
-              <Header value="Name" />
-              <Header value="Condition" />
-              <Header value="Quantity" />
-              <Header value="Actions" />
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
+        <form name="items-form" onSubmit={submitItem}>
+          <table>
+            <thead>
               <tr>
-                <Cell value={item.name} mode={mode} />
-                <Cell value={item.condition} mode={mode} />
-                <Cell value={item.quantity} mode={mode} />
-                <ActionCell type="edit" mode={mode} setMode={() => setMode} />
+                <Header value="Name" />
+                <Header value="Condition" />
+                <Header value="Quantity" />
+                <Header value="Actions" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className='Items-form'> {/* TODO: Implement CSS class name */}
-        <form onSubmit={addItem}>
-          <label>Name</label>
-          <input type="text"
-                 name="name"
-                 required="required" 
-                 onChange={addItemData}></input>
-
-          <label>Condition</label>
-          <input type="text" 
-                 name="condition"
-                 required="required"
-                 onChange={addItemData}></input>
-
-          <label>Quantity</label>
-          <input type="number"
-                 name="quantity"
-                 required="required"
-                 onChange={addItemData}></input>
-
-          <input type="submit"
-                 value="Submit"></input>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <Fragment>
+                  { item.id === editItemId ?
+                    (<EditableRow onChange={addItemData} onCancel={onCancel}/>) : 
+                    (<ReadableRow item={item} editItemId={editItemId} setEditItemId={(id) => setEditItemId(id)} />)
+                  }
+                </Fragment>
+              ))}
+              <NewRow addItemData={addItemData} disabled={editItemId !== null}></NewRow>
+            </tbody>
+          </table>
         </form>
       </div>
     </div>
