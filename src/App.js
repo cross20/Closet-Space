@@ -9,7 +9,8 @@ import data from "./mock-items";
 import firebase from "firebase/app";
 import "firebase/auth";
 
-const fb = require("firebase");
+// eslint-disable-next-line
+const fb = require("firebase"); // TODO: implement database.
 // Required for side-effects
 require("firebase/firestore");
 
@@ -26,239 +27,214 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
+// eslint-disable-next-line
+const db = firebase.firestore(); // TODO: implement database
 
-const db = firebase.firestore();
-
-/** 
- * Table header.
- * @param {props} Value - data to include in the header.
+/**
+ * Table row which displays an item.
+ * @param {*[]} item Object displayed in the table.
+ * @param {*} disabled True of a different row is being edited. Otherwise false.
+ * @param {*} onEdit Method which sets the id of the row being edited.
  */
-const Header = (props) => {
+const ReadOnlyRow = ({item, disabled, onEdit}) => {
   return (
-    <th class="Table">
-      {props.value}
-    </th>
-  )
-}
-
-/** 
- * Table data.
- * @param {props} Value - data to include in the cell.
- */
-const Cell = (props) => {
-  return (
-    <td class="Table">
-      {props.value}
-    </td>
+    <tr>
+      <td>{item.name}</td>
+      <td>{item.condition}</td>
+      <td>{item.quantity}</td>
+      <td>
+        <button disabled={disabled} onClick={() => onEdit(item.id)}>Edit</button>
+      </td>
+    </tr>
   );
 }
 
 /**
- * 
- * @param {props} Type - determines which mode to use when the action is taken.
- * @param {props} Mode - determines how the table row can be interacted with.
- * @param {props} SetMode - function for setting the mode of the parent.
+ * Table row made of inputs. Used to modify the item associated with the row.
+ * @param {*[]} item Object displayed and modified by the inputs of the row.
+ * @param {*} onChange Method which modifies the values of the the item.
+ * @param {*} onCancel Method which responds to the Cancel button being selected.
  */
-const ActionCell = (props) => {
-
-  const [editItemId, setEditItemId] = useState(props.editItemId);
-
-  // TODO: determine how to align text to left using CSS.
-  if (props.type === 'edit') {
-
-    const handleEditItemId = (editItemId) => {
-      setEditItemId(editItemId);
-      props.setEditItemId(editItemId);
-    }
-
-    return (
-      <td class='Table'>
-        <button onClick={() => handleEditItemId(props.itemId)}>
-          Edit
+const EditRow = ({item, onChange, onCancel}) => {
+  return (
+    <ItemRow item={item}
+      onChange={(newItem) => onChange(newItem)}
+      disabled={false}
+      submitValue="Save" 
+      actions={
+        <button onClick={onCancel}>
+          Cancel
         </button>
-      </td>
-    );
-  }
-}
-
-const ReadableRow = ({ item, editItemId, setEditItemId }) => {
-  return (
-    <tr>
-      <Cell value={item.name} />
-      <Cell value={item.condition} />
-      <Cell value={item.quantity} />
-      <ActionCell type="edit" itemId={item.id} editItemId={editItemId} setEditItemId={(id) => setEditItemId(id)} />
-    </tr>
+      }>
+    </ItemRow>
   );
 }
 
-const EditableRow = ({ onChange, onCancel }) => {
+/**
+ * Table row made of inputs. Used to add a new item to the table.
+ * @param {*[]} newItem Object displayed and modified by the inputs of the row.
+ * @param {*} disabled Whether a row is being edited or not.
+ * @param {*} onChange Method which modifies the values of the the item.
+ */
+const NewRow = ({newItem, disabled, onChange}) => {
   return (
-    <tr>
-      <td>
-        <input type="text"
-          name="name"
-          required="required"
-          onChange={onChange}>
-        </input>
-      </td>
-      <td>
-        <input type="text" 
-          name="condition"
-          required="required"
-          onChange={onChange}>
-        </input>
-      </td>
-      <td>
-        <input type="number"
-          name="quantity"
-          required="required"
-          onChange={onChange}>
-        </input>
-      </td>
-      <td>
-        <input type="submit"
-          value="Save">
-        </input>
-        <button onClick={onCancel}>Cancel</button>
-      </td>
-    </tr>
+    <ItemRow item={newItem}
+      disabled={disabled}
+      onChange={(newItem) => onChange(newItem)}
+      submitValue="Add">
+    </ItemRow>
   );
 }
 
-const NewRow = ({ addItemData, disabled }) => {
-  return (
-    <tr>
-      <td>
-        <input type="text"
-          name="name"
-          required="required" 
-          onChange={addItemData}>
-        </input>
-      </td>
-      <td>
-        <input type="text" 
-          name="condition"
-          required="required"
-          onChange={addItemData}>
-        </input>
-      </td>
-      <td>
-        <input type="number"
-          name="quantity"
-          required="required"
-          onChange={addItemData}>
-        </input>
-      </td>
-      <td>
-        <input type='submit'
-          value='Add'
-          disabled={disabled}>
-        </input>
-      </td>
-    </tr>
-  );
-}
+/**
+ * Table row made of inputs. Each input corresponds to a property of the item.
+ * @param {*[]} item Object used to set the values of each input.
+ * @param {*} disabled Boolean which enables or disabled the inputs.
+ * @param {*} onChange Method which sets the value of the item.
+ * @param {*} submitValue String which sets the text inside the submit button.
+ * @param {*} [actions] Component containing buttons which perform actions other than submit. 
+ */
+const ItemRow = ({item, disabled, onChange, submitValue, actions}) => {
 
-const Items = () => {
-
-  const [items, setItems] = useState(data);
-  const [itemData, setItemData] = useState({
-    name: '',
-    condition: '',
-    quantity: 0
-  });
-  const [editItemId, setEditItemId] = useState(null);
-
-  const submitItem = (event) => {
-    if (editItemId === null) {
-      addItem(event);
-      // TODO: determine how to clear form inputs after add item.
-    } else {
-      updateItem(event);
-    }
+  if (actions === undefined) {
+    actions = () => {return (<div />)}
   }
 
-  const addItemData = (event) => {
+  const changeItem = (event) => {
     event.preventDefault();
 
-    const fieldName = event.target.getAttribute('name');
+    const fieldName = event.target.getAttribute("name");
     const fieldValue = event.target.value;
 
-    const newItemData = { ...itemData };
-    newItemData[fieldName] = fieldValue;
+    const newItem = { ...item };
+    newItem[fieldName] = fieldValue;
 
-    setItemData(newItemData);
+    onChange(newItem);
   }
 
-  const addItem = (event) => {
-    event.preventDefault();
+  return (
+    <tr>
+    <td>
+      <input form="items-form"
+        type="text"
+        name="name"
+        required={true}
+        disabled={disabled}
+        value={item.name}
+        onChange={changeItem}>
+      </input>
+    </td>
+    <td>
+      <input form="items-form"
+        type="text" 
+        name="condition"
+        required={true}
+        disabled={disabled}
+        value={item.condition}
+        onChange={changeItem}>
+      </input>
+    </td>
+    <td>
+      <input form="items-form"
+        type="number"
+        min={1}
+        name="quantity"
+        required={true}
+        disabled={disabled}
+        value={item.quantity}
+        onChange={changeItem}>
+      </input>
+    </td>
+    <td>
+      <input form="items-form"
+        type="submit"
+        disabled={disabled}
+        value={submitValue}>
+      </input>
+      <Fragment>{actions}</Fragment>
+    </td>
+  </tr>
+  );
+}
 
-    const newItem = {
+/**
+ * Displays a table of items and a form to add or edit items.
+ */
+const Items = () => {
+
+  const defaultItem = {
       id: nanoid(),
-      name: itemData.name,
-      condition: itemData.condition,
-      quantity: itemData.quantity
+      name: "",
+      condition: "",
+      quantity: 0
     };
 
-    const newItems = [ ...items, newItem ];
+  const [items, setItems] = useState(data);
+  const [displayItems, setDisplayItems] = useState(items);
+  const [newItem, setNewItem] = useState(defaultItem);
+  const [editRowId, setEditRowId] = useState(-1);
 
-    setItems(newItems);
+  const updateItems = (event) => {
+    event.preventDefault();
+
+    if (editRowId === -1) {
+      appendDisplayItems(newItem);
+      setNewItem(defaultItem);
+    } else {
+      setEditRowId(-1);
+    }
+
+    setItems(displayItems);
   }
 
-  const updateItem = (event) => {
-    event.preventDefault();
-    
-    const newItem = {
-      id: editItemId,
-      name: itemData.name,
-      condition: itemData.condition,
-      quantity: itemData.quantity
-    };
+  const updateDisplayItems = (newItem) => {
+    const newItems = [ ...displayItems ];
 
-    var newItems = [ ...items ];
-
-    for ( var i = 0; i < newItems.length; i++ ) {
-      if(newItems[i].id === newItem.id) {
+    for (var i = 0; i < newItems.length; i++) {
+      if (newItems[i].id === newItem.id) {
         newItems[i] = newItem;
       }
     }
 
-    setItems(newItems);
-    setEditItemId(null);
+    setDisplayItems(newItems);
   }
 
-  const onCancel = () => {
-    setEditItemId(null);
+  const revertDisplayItems = () => {
+    setDisplayItems(items);
+    setEditRowId(-1);
+  }
+
+  const appendDisplayItems = (newItem) => {
+    const newItems = [ ...displayItems ];
+
+    newItems.push(newItem);
+
+    setDisplayItems(newItems);
   }
 
   return (
-    <div className='Items'> {/* TODO: Implement CSS class name */}
-      <div className='Items-table'> {/* TODO: Implement CSS class name */}
-        <form name="items-form" onSubmit={submitItem}>
-          <table>
-            <thead>
-              <tr>
-                <Header value="Name" />
-                <Header value="Condition" />
-                <Header value="Quantity" />
-                <Header value="Actions" />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <Fragment>
-                  { item.id === editItemId ?
-                    (<EditableRow onChange={addItemData} onCancel={onCancel}/>) : 
-                    (<ReadableRow item={item} editItemId={editItemId} setEditItemId={(id) => setEditItemId(id)} />)
-                  }
-                </Fragment>
-              ))}
-              <NewRow addItemData={addItemData} disabled={editItemId !== null}></NewRow>
-            </tbody>
-          </table>
-        </form>
-      </div>
+    <div className='Items-table'> {/* TODO: Implement CSS class name */}
+      <form id="items-form" onSubmit={updateItems} />
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Condition</th>
+            <th>Quantity</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {displayItems.map((item) => (
+            <Fragment key={item.id}>
+              { item.id === editRowId ?
+                <EditRow key={item.id} item={item} onChange={(newItem) => updateDisplayItems(newItem)} onCancel={() => revertDisplayItems()}></EditRow> :
+                <ReadOnlyRow key={item.id} item={item} disabled={editRowId !== -1} onEdit={(rowId) => setEditRowId(rowId)}></ReadOnlyRow> }
+            </Fragment>
+          ))}
+          <NewRow id={newItem.id} disabled={editRowId !== -1} newItem={newItem} onChange={(newItem) => setNewItem(newItem)}></NewRow>
+        </tbody>
+      </table>
     </div>
   );
 }
